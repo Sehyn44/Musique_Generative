@@ -7,7 +7,7 @@ const Fs = 48000								# (Hz)
 
 ##### Valeurs à changer pour modifier le rythme #####
 const bpm = 80  								# (battements par minute)
-const measure_length = 5						# (battements par mesure)
+const measure_length = 4						# (battements par mesure)
 const subs_div = 6								# (subdivisions par battement)
 
 const total_subs = measure_length * subs_div	# (subdivisions totales par mesure)
@@ -18,7 +18,7 @@ const s_per_sub = spb / subs_div				# (secondes par subdivision)
 var fondamental = 110.0
 var semitone_ratio = pow(2.0, 1.0 / 12.0)
 
-var gamme = [0, 2, 3, 5, 7, 8, 10]	# gamme en demi-tons par rapport à la fondamentale (0 = Fondamentale = La)
+var gamme = [0, 1, 4, 5, 7, 8, 10]	# gamme en demi-tons par rapport à la fondamentale (0 = Fondamentale = La)
 var note = 0
 
 var markov_weighted = {							# {0: 0.0, 2: 0.0, 3: 0.0, 5: 0.0, 7: 0.0, 8: 0.0, 10: 0.0}
@@ -68,7 +68,6 @@ func _ready():
 			else:
 				print("  Temps ",(1+j / subs_div), " | Subdiv ", 1+j % subs_div)
 				
-
 			if (j / subs_div) % 2 == 0 and j % subs_div == 0 :	
 				message[0] = Drum_Kick
 
@@ -76,7 +75,6 @@ func _ready():
 				if !Bass_Groove :
 					Bass_Note.Frequency = fondamental * pow(2.0, note/12.0)/2
 					message[3] = Bass_Note 
-
 
 			elif (j / subs_div) % 2 == 1 and j % subs_div == 0 :
 				message[1] = Drum_Snare
@@ -86,7 +84,6 @@ func _ready():
 					message[3] = Bass_Note
 
 				Bass_Groove = round(randf_range(0, 3)/3)
-
 
 			if j% 1 == 0:
 				message[2] = Drum_HiHat

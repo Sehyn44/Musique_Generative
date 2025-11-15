@@ -133,7 +133,7 @@ func receive_message(message):
 				
 				
 
-		for i in range(Fs*s_per_sub):
+		for i in range(Fs*s_per_sub+1):
 			playback.push_frame(Vector2.ONE * Buffer[i])
 
 		Buffer = rotate_array(Buffer, Fs*s_per_sub)
@@ -409,15 +409,16 @@ func Play_Kick(duration, volume = 1.0):
 		- The kick is band-limited by the lowpass filter to reduce high-frequency content.
 	"""
 	var out = lowpass_iir(add_arrays(Chirp(duration, 40.0, 10.0, "sawtooth", 1.0), Noise(duration)), 200.0)
+	var out_bis = lowpass_iir(add_arrays(Noise(duration), Noise(duration)), 1000.0)
 	var decay = Decay(duration, 4.5)
 
 	if Buffer.size() < out.size():
 		for i in range(Buffer.size()):
-			out[i] *= decay[i] * volume
+			out[i] *= decay[i] * volume * out_bis[i]
 			Buffer[i] += out[i]
 	else :
 		for i in range(out.size()):
-			out[i] *= decay[i] * volume
+			out[i] *= decay[i] * volume * out_bis[i]
 			Buffer[i] += out[i]
 
 func Play_Snare(duration, volume = 1.0):
@@ -472,7 +473,7 @@ func Play_SquareWave(duration, frequency, volume = 1.0):
 	- Long tau produces a sustained note unless duration is short.
 	"""
 	var out = lowpass_iir(Chirp(duration, frequency, frequency, "square", 1.0), 5000.0)
-	var out_bis = lowpass_iir(Chirp(duration, 4.02*frequency, 4*frequency, "square", 1.0), 5000.0)
+	var out_bis = lowpass_iir(Chirp(duration, 4.05*frequency, 4*frequency, "square", 1.0), 5000.0)
 	var decay = Decay(duration, 1.0)
 
 	if Buffer.size() < out.size():
@@ -506,7 +507,7 @@ func Play_Bass(duration, frequency, volume = 1.0):
 		void (mixes into global Buffer)
 	"""
 	var out = lowpass_iir(Chirp(duration, frequency, frequency, "sawtooth", 1.0), 5000.0)
-	var out_bis = lowpass_iir(Chirp(duration, 2*frequency, 1.995*frequency, "square", 1), 5000.0)
+	var out_bis = lowpass_iir(Chirp(duration, 1.990*frequency, 2.01*frequency, "square", 1), 5000.0)
 	var decay = Decay(duration, 1.0)
 
 	if Buffer.size() < out.size():
