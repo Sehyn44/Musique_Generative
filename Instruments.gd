@@ -73,7 +73,7 @@ func _ready():
 	Drum_Kick = Note.new("Drum", 0.4, "Kick", 440.0, vol_drum_kick)													## Note de kick
 	Drum_Snare = Note.new("Drum", 0.15, "Snare", 440.0, vol_drum_snare)												## Note de snare
 	Drum_HiHat = Note.new("Drum", 0.4, "HiHat", 440.0, vol_drum_hihat)												## Note de hihat
-	Lead_Note = Note.new("Synth", s_per_sub, "Square", fondamental * pow(2.0, note/12.0), randf()*vol_lead)			## Note de lead
+	Lead_Note = Note.new("Synth", s_per_sub, "Square", fondamental * pow(2.0, note/12.0), vol_lead)			## Note de lead
 	Bass_Note = Note.new("Bass", s_per_sub*(subs_div-1), "Bass", fondamental * pow(2.0, note/12.0)/2, vol_bass)		## Note de basse
 	
 	# Start playing the AudioPlayer, and prepare the Buffer Array
@@ -90,6 +90,7 @@ func receive_message(message):
 	Drum_Kick.Volume = vol_drum_kick
 	Drum_Snare.Volume = vol_drum_snare
 	Drum_HiHat.Volume = vol_drum_hihat
+	Lead_Note.Volume = vol_lead
 	Bass_Note.Volume = vol_bass
 	
 	note = message[1]
@@ -105,7 +106,7 @@ func receive_message(message):
 	
 
 		
-	if (int(j / subs_div)) % 2 == 0 and j % subs_div == 0 :	
+	if (int(j / float(subs_div))) % 2 == 0 and j % subs_div == 0 :	
 		Sound_To_Render[0] = Drum_Kick
 
 		Bass_Groove = randi_range(0, 1)
@@ -113,22 +114,22 @@ func receive_message(message):
 			Bass_Note.Frequency = fondamental * pow(2.0, note/12.0)/2
 			Sound_To_Render[3] = Bass_Note 
 
-	elif (j / subs_div) % 2 == 1 and j % subs_div == 0 :
+	elif (int(j / float(subs_div))) % 2 == 1 and j % subs_div == 0 :
 		Sound_To_Render[1] = Drum_Snare
 
 		if Bass_Groove :
 			Bass_Note.Frequency = fondamental * pow(2.0, note/12.0)/2
 			Sound_To_Render[3] = Bass_Note
 
-		Bass_Groove = round(randf_range(0, 3)/3)
+		Bass_Groove = int(randf_range(0, 5)/5)
 
 	elif j% 1 == 0:
 		Sound_To_Render[2] = Drum_HiHat
 	
-
-	Lead_Note.Frequency = fondamental * pow(2.0, note/12.0)
-	Lead_Note.Volume = randf()*vol_lead
-	Sound_To_Render[4] = Lead_Note
+	if randf() >= 0.3 :
+		Lead_Note.Frequency = fondamental * pow(2.0, note/12.0)
+		# Lead_Note.Volume = randf()*vol_lead
+		Sound_To_Render[4] = Lead_Note
 	
 	for m in Sound_To_Render:
 		if m != null:
@@ -141,7 +142,7 @@ func receive_message(message):
 			elif m.Soundtype == "Snare":
 				Play_Snare(m.Duration, m.Volume)
 			
-			elif m.Soundtype == "Square":
+			elif m.Soundtype == "Square" and m.Volume != 0.0:
 				Play_SquareWave(m.Duration, m.Frequency, m.Volume)
 
 			elif m.Soundtype == "Bass":
@@ -150,7 +151,7 @@ func receive_message(message):
 			
 	for i in range(Fs*s_per_sub+1):
 		playback.push_frame(Vector2.ONE * Buffer[i])
-	Buffer = rotate_array(Buffer, Fs*s_per_sub)
+	Buffer = rotate_array(Buffer, round(Fs*s_per_sub))
 
 
 
@@ -309,8 +310,8 @@ func Play_HiHat(duration: float, volume: float = 1.0) -> void:
 ## [br][param duration: float] Duration of the sound (seconds).
 ## [br][param volume: float = 1.0] Amplitude multiplier (between 0.0 and 1.0).
 func Play_Kick(duration: float, volume: float = 1.0) -> void:
-	var out = lowpass_iir(add_arrays(Chirp(duration, 40.0, 10.0, "sawtooth", 1.0), WhiteNoise(duration)), 200.0)
-	var out_bis = lowpass_iir(add_arrays(WhiteNoise(duration), WhiteNoise(duration)), 1000.0)
+	var out = lowpass_iir(add_arrays(Chirp(duration, 40.0, 10.0, "sawtooth", 1.0), WhiteNoise(duration)), 400.0)
+	var out_bis = lowpass_iir(Chirp(duration, 30.0, 10.0, "square", 1.0), 1000.0)
 	var decay = Decay(duration, 4.5)
 
 	if Buffer.size() < out.size():
@@ -327,7 +328,7 @@ func Play_Kick(duration: float, volume: float = 1.0) -> void:
 ## [br][param duration: float] Duration of the sound (seconds).
 ## [br][param volume: float = 1.0] Amplitude multiplier (between 0.0 and 1.0).
 func Play_Snare(duration: float, volume: float = 1.0) -> void:
-	var out = WhiteNoise(duration)
+	var out = add_arrays(WhiteNoise(duration), Chirp(duration, 300.0, 200.0, "square", 0.1))
 	var decay = Decay(duration, 1.5)
 
 	if Buffer.size() < out.size():
@@ -345,7 +346,7 @@ func Play_Snare(duration: float, volume: float = 1.0) -> void:
 ## [br][param frequency: float] Fundamental frequency (Hz).
 ## [br][param volume: float = 1.0] Amplitude multiplier (between 0.0 and 1.0).
 func Play_SquareWave(duration: float, frequency: float, volume: float = 1.0) -> void:
-	var out = lowpass_iir(Chirp(duration, frequency, frequency, "square", 1.0), 5000.0)
+	var out = lowpass_iir(Chirp(duration, frequency, frequency, "square", 1.0), 10000.0)
 	var out_bis = lowpass_iir(Chirp(duration, 4.05*frequency, 4*frequency, "square", 1.0), 5000.0)
 	var decay = Decay(duration, 2, false)
 
@@ -364,7 +365,7 @@ func Play_SquareWave(duration: float, frequency: float, volume: float = 1.0) -> 
 ## [br][param frequency: float] Fundamental frequency (Hz).
 ## [br][param volume: float = 1.0] Amplitude multiplier (between 0.0 and 1.0).
 func Play_Bass(duration: float, frequency: float, volume: float = 1.0) -> void:
-	var out = lowpass_iir(Chirp(duration, frequency, frequency, "sawtooth", 1.0), 5000.0)
+	var out = lowpass_iir(Chirp(duration, 0.99*frequency, frequency, "sawtooth", 1.0), 10000.0)
 	var out_bis = lowpass_iir(Chirp(duration, 1.990*frequency, 2.01*frequency, "square", 1), 5000.0)
 	var decay = Decay(duration, 1)
 

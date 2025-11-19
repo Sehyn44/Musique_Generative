@@ -4,11 +4,16 @@
 [ext_resource type="Script" uid="uid://cc7byllddml4q" path="res://Instruments.gd" id="2_rpqi1"]
 
 [sub_resource type="AudioStreamGenerator" id="AudioStreamGenerator_x4av3"]
+mix_rate_mode = 0
+mix_rate = 48000.0
+buffer_length = 2.26
 
 [node name="MainScene" type="Node2D"]
 
 [node name="Horloge" type="Node" parent="."]
 script = ExtResource("1_x4av3")
+sub_div_pm = 600.0
+subs_div = 4
 
 [node name="Instrument" type="Node" parent="Horloge" node_paths=PackedStringArray("Clock", "AudioPlayer")]
 script = ExtResource("2_rpqi1")

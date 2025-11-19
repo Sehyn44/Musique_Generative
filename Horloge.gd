@@ -59,7 +59,7 @@ func _ready():
 		note = next_note_weighted(note)
 
 		Instrument.receive_message([iteration, note])
-		iteration = iteration + 1
+		iteration = (iteration + 1) % (total_subs*20)
 
 		await get_tree().create_timer(s_per_sub).timeout
 
